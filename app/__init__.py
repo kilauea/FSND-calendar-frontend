@@ -53,6 +53,8 @@ def create_app(config='config'):
 
     if 'API_URL' in os.environ:
         app.config['API_URL'] = os.environ['API_URL']
+    if 'SECRET_KEY' in os.environ:
+        app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 
     if 'DATABASE_URL' in os.environ:
         database_path = os.environ['DATABASE_URL']
