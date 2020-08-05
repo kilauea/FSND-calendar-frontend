@@ -52,8 +52,12 @@ def create_app(config='config'):
     csrf.init_app(app)
 
     if 'API_URL' in os.environ:
+        # Use the API_URL environment varible on Heroku.
         app.config['API_URL'] = os.environ['API_URL']
     if 'SECRET_KEY' in os.environ:
+        # Use the SECRET_KEY environment varible on Heroku
+        # It must be a constant value to allow the session
+        # to be persistent.
         app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 
     if 'DATABASE_URL' in os.environ:
