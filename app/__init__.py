@@ -51,6 +51,9 @@ def create_app(config='config'):
     app.config['CORS_HEADERS'] = 'Content-Type'
     csrf.init_app(app)
 
+    if 'API_URL' in os.environ:
+        app.config['API_URL'] = os.environ['API_URL']
+
     if 'DATABASE_URL' in os.environ:
         database_path = os.environ['DATABASE_URL']
     else:
