@@ -85,14 +85,13 @@ def index():
         flash('No calendars found')
         return response
 
-    calendars = [json.loads(calendar) for calendar in response['calendars']]
     class MyCSRFForm(FlaskForm):
         id = HiddenField('id')
 
     return render_template(
         'calendar/home.html',
         session=session,
-        calendars=calendars,
+        calendars=response['calendars'],
         form=MyCSRFForm(),
         api_url=current_app.config["API_URL"] + 'api',
         dashboard_link='/auth/dashboard',

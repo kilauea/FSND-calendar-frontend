@@ -51,7 +51,7 @@
             const name = document.getElementById("calendar_" + calendar_id + "_name").value;
             if (confirm("Delete calendar '" + name + "'?") == true) {
                 $.ajax({
-                    url: "{{ api_url }}/calendars/"  + calendar_id + "/",
+                    url: "{{ api_url }}/calendars/" + calendar_id + "/",
                     type: "DELETE",{% if jwt %}
 										headers: {
 												Authorization: 'Bearer {{ jwt }}'
