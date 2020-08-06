@@ -22,6 +22,14 @@ import app.mod_auth.auth as auth
 # Define the blueprint: 'auth', set its url prefix: app.url/auth
 mod_calendar = Blueprint('calendar', __name__, url_prefix='/calendar')
 
+@mod_calendar.errorhandler(400)
+def permission_error(error):
+    return render_template('errors/400.html', error_msg=error), 400
+
+@mod_calendar.errorhandler(401)
+def authorization_error(error):
+    return render_template('errors/401.html', error_msg=error), 401
+
 @mod_calendar.errorhandler(404)
 def not_found_error(error):
     return render_template('errors/404.html', error_msg=error), 404
@@ -43,22 +51,39 @@ def get_jwt_token():
 def api_request(method, api, data=None, headers={'content-type': 'application/json'}):
     if get_jwt_token():
         headers['Authorization'] = 'Bearer %s' % get_jwt_token()
+    else:
+        headers.pop('Authorization', None)
     url = current_app.config["API_URL"] + 'api' + api
     if method.upper() == 'GET':
-        response = requests.get(url=url, headers=headers)
-    if method.upper() == 'POST':
-        response = requests.post(url=url, data=data, headers=headers)
-    if method.upper() == 'PATCH':
-        response = requests.patch(url=url, data=data, headers=headers)
-    if method.upper() == 'DELETE':
-        response = requests.delete(url=url, headers=headers)
-    return response.json()
+        response = requests.get(url=url, headers=headers).json()
+    elif method.upper() == 'POST':
+        response = requests.post(url=url, data=data, headers=headers).json()
+    elif method.upper() == 'PATCH':
+        response = requests.patch(url=url, data=data, headers=headers).json()
+    elif method.upper() == 'DELETE':
+        response = requests.delete(url=url, headers=headers).json()
+    else:
+        return False, server_error('Internal server error')
+
+    if response.get('success', False) == False:
+        if response.get('error', None) == 400:
+            return False, permission_error('Permission denied')
+        elif response.get('error', None) == 401:
+            return False, authorization_error('Not authorized')
+        elif response.get('error', None) == 404:
+            return False, not_found_error('Resource not found')
+        elif response.get('error', None) == 422:
+            return False, unprocessable_entity_error('Unprocessable request')
+        elif response.get('error', None) == 500:
+            return False, server_error('Internal server error')
+    return True, response
 
 @mod_calendar.route('/', methods=['GET'])
 def index():
-    response = api_request('GET', '/calendars/')
-    if response.get('success', False) == False:
-        return not_found_error('No calendars found')
+    ret, response = api_request('GET', '/calendars/')
+    if ret == False:
+        flash('No calendars found')
+        return response
 
     calendars = [json.loads(calendar) for calendar in response['calendars']]
     class MyCSRFForm(FlaskForm):
@@ -70,7 +95,8 @@ def index():
         calendars=calendars,
         form=MyCSRFForm(),
         api_url=current_app.config["API_URL"] + 'api',
-        dashboard_link='/auth/dashboard'
+        dashboard_link='/auth/dashboard',
+        jwt=get_jwt_token()
     )
 
 @mod_calendar.route('/<int:calendar_id>/', methods=['GET'])
@@ -78,11 +104,12 @@ def get_calendar_id(calendar_id):
     y = request.args.get('y', -1, type=int)
     m = request.args.get('m', -1, type=int)
     if y != -1 and m != -1:
-        response = api_request('GET', '/calendars/%d/tasks/?y=%d&m=%d' % (calendar_id, y, m))
+        ret, response = api_request('GET', '/calendars/%d/tasks/?y=%d&m=%d' % (calendar_id, y, m))
     else:
-        response = api_request('GET', '/calendars/%d/tasks/' % calendar_id)
-    if response.get('success', False) == False:
-        return not_found_error('Calendar %s not found' % calendar_id)
+        ret, response = api_request('GET', '/calendars/%d/tasks/' % calendar_id)
+    if ret == False:
+        flash('Calendar %s not found' % calendar_id)
+        return response
 
     def _add_task_to_task_list(tasks_list, day, month, task, view_past_tasks=True):
         if not view_past_tasks:
@@ -183,8 +210,8 @@ def save_calendar():#jwt):
                 'emojis_enabled': form.emojis_enabled.data,
                 'show_view_past_btn': form.show_view_past_btn.data
             }
-            response = api_request('POST', '/calendars/', json.dumps(calendar))
-            if response['success'] == True:
+            ret, response = api_request('POST', '/calendars/', json.dumps(calendar))
+            if ret == True:
                 flash('Calendar ' + form.name.data + ' was successfully created!')
                 return redirect("/calendar/%d" % (response['calendar_id']), code=302)
         else:
@@ -202,9 +229,10 @@ def save_calendar():#jwt):
 @mod_calendar.route('/<int:calendar_id>/delete', methods=['DELETE'])
 #@auth.requires_auth('delete:calendars')
 def delete_calendar(calendar_id):
-    response = api_request('DELETE', '/calendars/%d/' % calendar_id)
-    if response.get('success', False) == False:
-        return not_found_error('Calendar %s not found' % calendar_id)
+    ret, response = api_request('DELETE', '/calendars/%d/' % calendar_id)
+    if ret == False:
+        flash('Calendar %s not found' % calendar_id)
+        return response
     name = response['name']
     flash('Calendar ' + name + ' was successfully deleted!')
     return redirect("/calendar/", code=302)
@@ -212,9 +240,10 @@ def delete_calendar(calendar_id):
 @mod_calendar.route('/<int:calendar_id>/edit', methods=['GET'])
 #@auth.requires_auth('patch:calendars')
 def edit_calendar_form(calendar_id):
-    response = api_request('GET', '/calendars/%d/' % calendar_id)
-    if response.get('success', False) == False:
-        return not_found_error('Calendar %s not found' % calendar_id)
+    ret, response = api_request('GET', '/calendars/%d/' % calendar_id)
+    if ret == False:
+        flash('Calendar %s not found' % calendar_id)
+        return response
     calendar = response['calendar']
 
     form = CalendarForm()
@@ -256,9 +285,10 @@ def save_calendar_form(calendar_id):
     calendar['emojis_enabled'] = form.emojis_enabled.data
     calendar['show_view_past_btn'] = form.show_view_past_btn.data
 
-    response = api_request('PATCH', '/calendars/%d/' % calendar_id, json.dumps(calendar))
-    if response.get('success', False) == False:
-        return not_found_error('Calendar %s not updated' % calendar_id)
+    ret, response = api_request('PATCH', '/calendars/%d/' % calendar_id, json.dumps(calendar))
+    if ret == False:
+        flash('Calendar %s not updated' % calendar_id)
+        return response
 
     flash('Calendar ' + form.name.data + ' was successfully saved!')
     return redirect("/calendar/%d" % (calendar_id), code=302)
@@ -267,9 +297,10 @@ def save_calendar_form(calendar_id):
 @mod_calendar.route('/<int:calendar_id>/tasks', methods=['GET'])
 #@auth.requires_auth('post:tasks')
 def new_task_form(calendar_id):
-    calendar_query = api_request('GET', '/calendars/%d/' % calendar_id)
-    if calendar_query.get('success', False) == False:
-        return not_found_error('Calendar %s not found' % calendar_id)
+    ret, calendar_query = api_request('GET', '/calendars/%d/' % calendar_id)
+    if ret == False:
+        flash('Calendar %s not found' % calendar_id)
+        return response
 
     Calendar.set_first_weekday(calendar_query['calendar']['week_starting_day'])
 
@@ -374,9 +405,10 @@ def create_task(calendar_id):
             'repetition_type': repetition_type,
             'repetition_subtype': repetition_subtype
         }
-        response = api_request('POST', '/calendars/tasks/', json.dumps(newTask))
-        if response.get('success', False) == False:
-            return not_found_error('Task in calendar %s not created' % calendar_id)
+        ret, response = api_request('POST', '/calendars/tasks/', json.dumps(newTask))
+        if ret == False:
+            flash('Task in calendar %s not created' % calendar_id)
+            return response
 
         return redirect("/calendar/%s/?y=%d&m=%d" % (calendar_id, year, month), code=302)
     else:
@@ -385,9 +417,10 @@ def create_task(calendar_id):
 @mod_calendar.route('/<int:calendar_id>/tasks/<int:task_id>', methods=['GET'])
 #@auth.requires_auth('patch:tasks')
 def edit_task(calendar_id, task_id):
-    response = api_request('GET', '/calendars/tasks/%d/' % task_id)
-    if response.get('success', False) == False:
-        return not_found_error('Task %s not found' % task_id)
+    ret, response = api_request('GET', '/calendars/tasks/%d/' % task_id)
+    if ret == False:
+        flash('Task %s not found' % task_id)
+        return response
 
     task = response['task']
     calendar = response['calendar']

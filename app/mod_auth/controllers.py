@@ -103,4 +103,5 @@ def dashboard():
     return render_template('auth/dashboard.html',
                            userinfo=session[constants.PROFILE_KEY],
                            userinfo_pretty=json.dumps(session[constants.JWT_PAYLOAD], indent=4),
-                           userperm_pretty=json.dumps(auth.verify_decode_jwt(session[constants.JWT_TOKEN]), indent=4))
+                           userperm_pretty=json.dumps(auth.verify_decode_jwt(session[constants.JWT_TOKEN]), indent=4),
+                           jwt=session[constants.JWT_TOKEN])
