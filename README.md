@@ -5,6 +5,8 @@ FSND-calendar-frontend
 
 Frontend application for the Capstone project, Udacity Full Stack Nano Degree
 
+This frontend is based on the following application: [https://github.com/Kartones/flask-calendar](https://github.com/Kartones/flask-calendar)
+
 FSND-calendar-frontend is a single page web application that displays the calendar informacion comming from the backend.
 
 The front en allows to login, using Auth0, and send the JWT token with the backend to manage the RBAC access to the APIs.
@@ -81,6 +83,7 @@ To run the application execute the following command, using the provided run.py 
 
 ```bash
 source venv/bin/activate
+source setup.sh
 python run.py
 ```
 
@@ -110,7 +113,11 @@ Now we need to add a git remote to the Heroku Git:
 
 * Open the settings in the Heroku app website.
 * Reveal Config Vars.
-* Add the FLASK_ENV variable.
+* Add the following variables:
+  * FLASK_ENV
+  * AUTH0_DOMAIN
+  * ALGORITHMS
+  * API_AUDIENCE
 
 ![Config Vars](images/Heroku_Config_Vars_frontend.png?raw=true)
 

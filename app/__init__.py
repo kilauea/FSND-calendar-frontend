@@ -1,6 +1,13 @@
 __all__ = ['mod_auth', 'mod_base', 'mod_calendar']
 
-from flask import Flask, render_template, current_app, send_from_directory, redirect, jsonify
+from flask import (
+    Flask,
+    render_template,
+    current_app,
+    send_from_directory,
+    redirect,
+    jsonify
+)
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_migrate import Migrate
@@ -10,6 +17,7 @@ import re
 
 from app.mod_auth.auth import AuthError
 
+
 def task_details_for_markup(details):
     URLS_REGEX_PATTERN = r"(https?\:\/\/[\w/\-?=%.]+\.[\w/\+\-?=%.~&\[\]\#]+)"
     DECORATED_URL_FORMAT = '<a href="{}" target="_blank">{}</a>'
@@ -17,16 +25,20 @@ def task_details_for_markup(details):
     fragments = re.split(URLS_REGEX_PATTERN, details)
     for index, fragment in enumerate(fragments):
         if index % 2 == 1:
-            decorated_fragments.append(DECORATED_URL_FORMAT.format(fragment, fragment))
+            decorated_fragments.append(
+                DECORATED_URL_FORMAT.format(fragment, fragment))
         else:
             decorated_fragments.append(fragment)
 
     return "".join(decorated_fragments)
 
+
 '''
 setup_db(app)
     binds a flask application and a SQLAlchemy service
 '''
+
+
 def setup_db(app, database_path, track_modifications=False):
     if database_path:
         app.config["SQLALCHEMY_DATABASE_URI"] = database_path
@@ -34,10 +46,13 @@ def setup_db(app, database_path, track_modifications=False):
     db.app = app
     db.init_app(app)
 
+
 '''
 create_app(config)
     creates the flask application
 '''
+
+
 def create_app(config='config'):
     csrf = CSRFProtect()
 
@@ -56,8 +71,8 @@ def create_app(config='config'):
         app.config['API_URL'] = os.environ['API_URL']
     if 'SECRET_KEY' in os.environ:
         # Use the SECRET_KEY environment varible on Heroku
-        # It must be a constant value to allow the session
-        # to be persistent.
+        # It must be a constant value to allow the session
+        # to be persistent.
         app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 
     if 'DATABASE_URL' in os.environ:
@@ -67,7 +82,8 @@ def create_app(config='config'):
     setup_db(app, database_path)
     CORS(app)
 
-    # Import a module / component using its blueprint handler variable (mod_auth)
+    # Import a module / component using its blueprint handler
+    # variable (mod_auth)
     from app.mod_auth.controllers import mod_auth as auth_module
     from app.mod_calendar.controllers import mod_calendar as calendar_module
 
@@ -79,18 +95,22 @@ def create_app(config='config'):
     def index():
         return redirect("/calendar/", code=302)
 
-    # To avoid main_calendar_action below shallowing favicon requests and generating error logs
+    # To avoid main_calendar_action below shallowing favicon requests
+    # and generating error logs
     @app.route("/favicon.ico")
     def favicon():
         send_from_directory(
-            os.path.join("static", "ico"), "favicon.ico", mimetype="image/vnd.microsoft.icon",
+            os.path.join("static", "ico"),
+            "favicon.ico",
+            mimetype="image/vnd.microsoft.icon",
         )
 
-    # CORS Headers 
+    # CORS Headers
     @app.after_request
     def after_request(response):
         response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,true')
+        response.headers.add('Access-Control-Allow-Headers',
+                             'Content-Type,Authorization,true')
         return response
 
     @app.errorhandler(404)
@@ -103,12 +123,12 @@ def create_app(config='config'):
 
     '''
     Error handler for AuthError
-        error handler should conform to general task above 
+        error handler should conform to general task above
     '''
     @app.errorhandler(AuthError)
     def handle_auth_error(error):
         return jsonify({
-            "success": False, 
+            "success": False,
             "error": error.status_code,
             "message": error.error['description']
         }), error.status_code
@@ -117,6 +137,7 @@ def create_app(config='config'):
     migrate = Migrate(app, db)
 
     return app
+
 
 # Define the database object which is imported
 # by modules and controllers

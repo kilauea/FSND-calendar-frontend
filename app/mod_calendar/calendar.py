@@ -1,6 +1,7 @@
 import calendar
 from datetime import date, datetime, timedelta
 
+
 class Calendar():
     @staticmethod
     def month_names():
@@ -20,7 +21,8 @@ class Calendar():
     @staticmethod
     def weekdays(week_starting_day):
         weekdays_headers = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
-        ret = weekdays_headers[week_starting_day:] + weekdays_headers[0:week_starting_day]
+        ret = weekdays_headers[week_starting_day:] + \
+            weekdays_headers[0:week_starting_day]
         return ret
 
     @staticmethod
@@ -31,7 +33,8 @@ class Calendar():
     @staticmethod
     def next_month_and_year(year, month):
         last_day_of_month = calendar.monthrange(year, month)[1]
-        next_month_date = date(year, month, last_day_of_month) + timedelta(days=2)
+        next_month_date = date(
+            year, month, last_day_of_month) + timedelta(days=2)
         return next_month_date.month, next_month_date.year
 
     @staticmethod
@@ -41,15 +44,21 @@ class Calendar():
 
     @staticmethod
     def month_days(year, month):
-        return calendar.Calendar(calendar.firstweekday()).itermonthdates(year, month)
+        return calendar.Calendar(
+            calendar.firstweekday()
+        ).itermonthdates(year, month)
 
     @staticmethod
     def month_days_with_weekday(year, month):
-        return calendar.Calendar(calendar.firstweekday()).monthdayscalendar(year, month)
+        return calendar.Calendar(
+            calendar.firstweekday()
+        ).monthdayscalendar(year, month)
 
     @staticmethod
     def previous_month_link(year, month, min_year, max_year):
-        month, year = Calendar.previous_month_and_year(year=year, month=month)
+        month, year = Calendar.previous_month_and_year(
+            year=year,
+            month=month)
         return (
             ""
             if year < min_year or year > max_year

@@ -6,7 +6,7 @@ WTF_CSRF_ENABLED = True
 SQLALCHEMY_DATABASE_URI = 'postgresql://acrespo@localhost:5432/calendarapp'
 # Secret key for signing cookies
 SECRET_KEY = os.urandom(32)
-API_URL='http://localhost:5000/'
+API_URL = 'http://localhost:5000/'
 
 # Colors for new task buttons
 BUTTON_CUSTOM_COLOR_VALUE = "#3EB34F"

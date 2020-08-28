@@ -5,7 +5,8 @@ TESTING = True
 DEBUG = True
 ENV = 'testing'
 WTF_CSRF_ENABLED = False
-SQLALCHEMY_DATABASE_URI = 'postgresql://acrespo@localhost:5432/test_calendarapp'
+SQLALCHEMY_DATABASE_URI = \
+    'postgresql://acrespo@localhost:5432/test_calendarapp'
 # Secret key for signing cookies
 SECRET_KEY = os.urandom(32)
 
