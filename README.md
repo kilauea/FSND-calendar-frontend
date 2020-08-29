@@ -114,10 +114,16 @@ Now we need to add a git remote to the Heroku Git:
 * Open the settings in the Heroku app website.
 * Reveal Config Vars.
 * Add the following variables:
-  * FLASK_ENV
-  * AUTH0_DOMAIN
-  * ALGORITHMS
-  * API_AUDIENCE
+  * FLASK_ENV = production
+  * API_URL = https://calendar-backend-acv.herokuapp.com/
+  * AUTH0_AUDIENCE = calendar
+  * AUTH0_CALLBACK_URL = https://calendar-frontend-acv.herokuapp.com/auth/callback/
+  * AUTH0_CLIENT_ID = xxxxxx
+  * AUTH0_CLIENT_SECRET = xxxxxx
+  * AUTH0_DOMAIN = kilauea.eu.auth0.com
+  * SECRET_KEY = xxxxx
+  * ALGORITHMS = RS256
+  * API_AUDIENCE = calendar
 
 ![Config Vars](images/Heroku_Config_Vars_frontend.png?raw=true)
 
@@ -132,3 +138,42 @@ To actually deploy the application we have to push it into the Heroku Git. We ca
 ### Test the application
 
 We can check the application openning the following url: [https://dashboard.heroku.com/apps/calendar-frontend-acv](https://dashboard.heroku.com/apps/calendar-frontend-acv)
+
+![Home page](images/Frontend_home_page.png?raw=true)
+
+### Login
+
+To be able to access to the calendar, create new calendars, or edit existing calendars, we need to login.
+
+The following fake users can be used to test the frontend app:
+* Calendar Admin:
+    - User: admincalendar@udacity.com
+    - Password: ximsIv-jangu9-qemkur
+* Calendar Manager:
+    - User: managercalendar@udacity.com
+    - Password: rymteb-3zySfe-dyxnan
+* Calendar User:
+    - User: usercalendar@udacity.com
+    - Password: sekgec-semteG-9kocto
+
+![Login page](images/Froendend_login.png?raw=true)
+
+Once logged in the home page will be like this:
+
+![Home page](images/Frontend_home_page_logged_in.png?raw=true)
+
+We will see at the top right corner the logged-in user email. We can click on it to access to the user information
+
+![Unser info](images/Frontend_user_info.png?raw=true)
+
+The user information shows among others the user permissions and the user JWT token. The tocken can be used to access the backend API from the command line.
+
+### Calendar page
+
+The calendar page will show a calendar for the selected year and month, current year and month by default, displaying the tasks belonging to the current user.
+
+It is possible to edit or delete by clicking an existing task and using the context menu. To create a new tasks we can use the + button or double click in one day.
+
+As well we can drag and drop a non recurrent task to change it to a new day.
+
+![Calendar](images/Frontend_calendar.png?raw=true)
